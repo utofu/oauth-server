@@ -2,11 +2,12 @@ from . import main
 from .. import db
 from ..models import Clients
 
-from flask import request
+from flask import request, redirect
 from ..helpers import secure_jsonify as jsonify
 from uuid import uuid4
 from hashlib import sha256
 import simplejson as json
+import datetime
 
 
 
@@ -32,19 +33,32 @@ def op_approval():
         redirect_uri = request.args['redirect_uri']
         scope = request.args['scope']
         state = request.args['state']
+        if redirect_uri is None:
+            redirect_uri = None
+        if scope is None:
+            scope = None
+        if state is None:
+            state = None
 
-        client = Clients.fetch(client_id)
-
-        if response_type != "" and client_id != "":
+        if response_type is not None and client_id is not None:
             """resorce-server approval"""
+            client = Clients.fetch(client_id)
             code = sha256(uuid4().hex).hexdigest()
-            if state == "":
+
+            """現在の時間を取得し、30分の時間を加算することで制限時間を生成。"""
+            expire_date = datetime.datetime.now() + datetime.timedelta(minutes=30)
+            
+            grant_code = GrantCodes.new(code,expire_date,user_id,client_id)
+            db.session.add(grant_code)
+            db.session.commit()
+            
+            if state is None:
                 return redirect(client.redirect_uri+"?code="+code)
             else :
                 return redirect(client.redirect_uri+"?code="+code+"&state="+state) 
         else :
             """invalid_request"""
-            if state == "":
+            if state is None:
                 return redirect(client.redirect_uri+"?error=invalid_request")
             else :
                 return redirect(client.redirect_uri+"?error=invalid_request&state="+state)
