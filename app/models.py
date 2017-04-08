@@ -68,6 +68,9 @@ class GrantCodes(Base, ScopesMixin):
     @classmethod
     def fetch_by_code(cls, code):
         return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+    @classmethod
+    def new(cls,code,expire_date,scope,user_id,client_id):
+        return cls(code=code,expire_date=expire_date,scope=scope,user_id=user_id,client_id=client_id)
 
 
 class Users(Base, ScopesMixin):

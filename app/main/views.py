@@ -25,30 +25,32 @@ def op_clients():
         return jsonify({'client': client.to_dict(show_secret=True)})
 
 
-@main.route('/approval', method=['GET','POST'])
+@main.route('/approval', methods`=['GET','POST'])
 def op_approval():
     if request.method == 'GET':
-        response_type = request.args['response_type']
-        client_id = request.args['client_id']
-        redirect_uri = request.args['redirect_uri']
-        scope = request.args['scope']
-        state = request.args['state']
+        response_type = request.get('response_type', None)
+        client_id = request.get('client_id', None)
+        redirect_uri = request.get('redirect_uri', None)
+        scope = request.get('scope', None)
+        state = request.get('state', None)
         if redirect_uri is None:
             redirect_uri = None
-        if scope is None:
-            scope = None
         if state is None:
             state = None
 
-        if response_type is not None and client_id is not None:
+        if response_type == "code" and client_id is not None and scope is not None:
             """resorce-server approval"""
             client = Clients.fetch(client_id)
+            """client_idがNoneの場合のエラー処理"""
+            if client is None:
+                return redirect(client.redirect_uri+"?error=invalid_request")
+
             code = sha256(uuid4().hex).hexdigest()
 
             """現在の時間を取得し、30分の時間を加算することで制限時間を生成。"""
             expire_date = datetime.datetime.now() + datetime.timedelta(minutes=30)
             
-            grant_code = GrantCodes.new(code,expire_date,user_id,client_id)
+            grant_code = GrantCodes.new(code,expire_date,scope,user_id,client_id)
             db.session.add(grant_code)
             db.session.commit()
             
@@ -62,4 +64,8 @@ def op_approval():
                 return redirect(client.redirect_uri+"?error=invalid_request")
             else :
                 return redirect(client.redirect_uri+"?error=invalid_request&state="+state)
+            
+            """scopeがNoneの場合のエラー処理"""
+            if scope is None:
+                return redirect(client.redirect_uri+"error=invalid_scope")
 
