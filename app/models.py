@@ -2,6 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
 from datetime import datetime
+from datetime import timedelta
 try: 
     from . import db
 except ValueError:
@@ -45,6 +46,17 @@ class Tokens(Base, ScopesMixin):
     @classmethod
     def fetch_by_access_token(cls, access_token):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+
+    @classmethod
+    def new(cls, client_id):
+        from uuid import uuid4
+        from hashlib import sha256
+        access_token = sha256(uuid4().hex).hexdigest()
+        access_token_expire_date = datetime.now()+timedelta(hours = 1)
+
+        refresh_token = sha256(uuid4().hex).hexdigest()
+        refresh_token_expire_date = datetime.now()+timedelta(hours = 1)
+
 
 
 class GrantCodes(Base, ScopesMixin):
@@ -164,8 +176,7 @@ class Clients(Base):
         backref="client")
 
     tokens = db.relationship(
-        'Tokens',
-        primaryjoin="Tokens.client_id==Clients.id",
+        'Tokens', primaryjoin="Tokens.client_id==Clients.id",
         foreign_keys="Tokens.client_id",
         lazy='dynamic',
         cascade='all, delete-orphan',
@@ -188,6 +199,10 @@ class Clients(Base):
         if show_secret:
             r.update({'secret': self.secret})
         return r
+
+    @classmethod
+    def fetch(cls, client_id):
+        return cls.query.filter_by(client_id=client_id, redirect_uri=redirect_uri).first()
 
 
 
