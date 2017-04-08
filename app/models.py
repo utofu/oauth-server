@@ -65,6 +65,10 @@ class GrantCodes(Base, ScopesMixin):
         cascade='all, delete-orphan',
         backref="granted_code")
 
+    @classmethod
+    def fetch_by_code(cls, code):
+        return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+
 
 class Users(Base, ScopesMixin):
     __tablename__ = 'users'
@@ -188,8 +192,9 @@ class Clients(Base):
         if show_secret:
             r.update({'secret': self.secret})
         return r
-
-
+    @classmethod
+    def fetch(cls,id):
+        return cls.query.filter_by(id=id).first()
 
 
 
