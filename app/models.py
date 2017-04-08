@@ -36,7 +36,7 @@ class Tokens(Base, ScopesMixin):
     access_token = Column(String(256), primary_key=True, autoincrement=False)
     access_token_expire_date = Column(DateTime, nullable=False)
     refresh_token = Column(String(256), nullable=True)
-    refresh_token_expire_date = Column(DateTime, nullable=False)
+    refresh_token_expire_date = Column(DateTime, nullable=True)
     _scopes = Column(Text, nullable=False)
     user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=False)
     client_id = Column(String(128), ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
