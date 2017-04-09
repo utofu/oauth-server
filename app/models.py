@@ -179,7 +179,8 @@ class Clients(Base):
         backref="client")
 
     tokens = db.relationship(
-        'Tokens', primaryjoin="Tokens.client_id==Clients.id",
+        'Tokens',
+        primaryjoin="Tokens.client_id==Clients.id",
         foreign_keys="Tokens.client_id",
         lazy='dynamic',
         cascade='all, delete-orphan',
@@ -204,11 +205,8 @@ class Clients(Base):
         return r
 
     @classmethod
-    def fetch(cls, client_id):
+    def fetch(cls, client_id, redirect_uri):
         return cls.query.filter_by(client_id=client_id, redirect_uri=redirect_uri).first()
-
-
-
 
 
 if __name__ == "__main__":

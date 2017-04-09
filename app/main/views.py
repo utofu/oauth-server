@@ -31,6 +31,7 @@ def client_start():
             'redirect_uri': regist['redirect_uri']}
     requests.get("/client_identifier", params=payload)
 
+
 @main.route('/client_identifier', methods=['GET'])
 def client_identifier():
     if request.method == 'GET':
@@ -43,20 +44,21 @@ def client_identifier():
         state = query['state']
 
         if not response_type == 'token':
-            return 
+            response = redirect_uri + "#error=invalid_request&state=" + state
+            return redirect_uri(response, code=302)
 
-        client = Clients.fetch(client_id)
-        if not client:
-            return 
+        client = Clients.fetch(client_id, redirect_uri)
+        if not client or client['redirect_uri'] != redirect_uri:
+            response = "#error=invalid_request&state=" + state
+            return redirect_uri(response, code=302)
 
         # ユーザ認証
         return render_template('form.html', client_id=client_id, state=state)
 
 @main.route('/auth', method=['POST'])
 def auth():
-    from datetime import datetime
-    from datetime import timedelta
-    user_id = request.form['user_id'] 
+    from datetime import datetime, timedelta
+    user_id = request.form['user_id']
     password = request.form['password']
     client_id = request.form['client_id']
     if not Users.fetch(user_id, password):
@@ -76,11 +78,14 @@ def auth():
     response['scope'] = token['scope']
     response['state'] = request.form['state']
 
-    redirect_uri = Clients.fetch(client_id)['redirect_uri']
+    if not Clients.fetch(client_id):
+        response = redirect_uri + "#error=invalid_request&state=" + response['state']
+        return redirect_uri(response, code=302)
 
+    redirect_uri = ['redirect_uri']
     uri = []
     for k, v in response:
-        tmp.append("{k}={v}".format(k=k, v=v))
+        uri.append("{k}={v}".format(k=k, v=v))
     url = redirect_uri + "#" + "&".join(uri)
 
     return redirect(url, code=302)
