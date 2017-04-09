@@ -32,7 +32,7 @@ def client_identifier():
         scope = query.get('scope', None)
         state = query.get('state', '')
 
-        query = []
+        query = {}
 
         if state:
             query['state'] = state
@@ -48,6 +48,7 @@ def client_identifier():
             error = True
 
         if error:
+            url = []
             for k, v in query:
                 uri.append("{k}={v}".format(k=k, v=v))
             url = redirect_uri + "#" + "&".join(uri)
