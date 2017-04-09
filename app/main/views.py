@@ -32,10 +32,6 @@ def op_approval():
         redirect_uri = request.get('redirect_uri', None)
         scope = request.get('scope', None)
         state = request.get('state', None)
-        if redirect_uri is None:
-            redirect_uri = None
-        if state is None:
-            state = None
 
         """resorce-server approval"""
         client = Clients.fetch(client_id)
@@ -96,16 +92,20 @@ def req_access():
     grant_code = GrantCodes.fetch_by_code(code)
     if grant_code is None:
         #return err msg
+        return redirect(client.redirect_uri+"?error=invalid_request")
 
     if grant_code.client_id != client_id :
         #return err msg
+        return redirect(client.redirect_uri+"?error=invalid_request")
 
     if grant_code.redirect_uri is None :
         if grant_type != "authorization_code" or code is None or client_id is None:
             #return err msg
+            return redirect(client.redirect_uri+"?error=invalid_request")
     else :
         if grant_type != "authorization_code" or code is None or client_id is None or redirect_uri is None:
             #return err msg
+            return redirect(client.redirect_uri+"?error=invalid_request")
         else :
             if redirect_uri != grant_code.redirect_uri:
                 return redirect(client.redirect_uri+"?error=invalid_request")
