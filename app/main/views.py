@@ -48,7 +48,7 @@ def client_identifier():
             error = True
 
         if error:
-            url = []
+            uri = []
             for k, v in query:
                 uri.append("{k}={v}".format(k=k, v=v))
             url = redirect_uri + "#" + "&".join(uri)
