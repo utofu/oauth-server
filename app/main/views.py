@@ -33,6 +33,7 @@ def client_identifier():
         state = query.get('state', '')
 
         query = {}
+        client = Clients.fetch(client_id)
 
         if state:
             query['state'] = state
@@ -42,9 +43,14 @@ def client_identifier():
             query['error'] = 'unsupported_response_type'
             error = True
 
-        client = Clients.fetch(client_id)
-        elif not client or client.redirect_uri != redirect_uri:
+        elif not client or client_id:
+            query['error'] = 'invalid_request'
+            error = True
+
+        elif client.redirect_uri != redirect_uri:
+            # 不正なredirect_uriの場合はリダイレクトさせない。
             query['error'] = 'unauthorized_client'
+            redirect_uri=''
             error = True
 
         if error:
@@ -65,11 +71,19 @@ def auth():
     client_id = request.form.get('client_id')
     state = request.form.get('state')
 
+    error = False
+
     # client auth
     client = Clients.fetch(client_id)
+
+    if not client or client.redirect_uri != redirect_uri:
+        query['error'] = 'unauthorized_client'
+        error = True
+
     if not client:
         response = "#error=invalid_request&state=" + state
         return redirect(response, code=302)
+
 
     redirect_uri = client.redirect_uri
 
@@ -99,4 +113,4 @@ def auth():
         uri.append("{k}={v}".format(k=k, v=v))
     url = redirect_uri + "#" + "&".join(uri)
 
-    return redirect(url)
+    return redirect(url, code=302)
