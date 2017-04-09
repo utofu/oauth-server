@@ -52,7 +52,7 @@ def auth():
     state = request.form.get('state')
 
     user = Users.fetch(user_id, password)
-    if user
+    if user:
         response = redirect_uri + "#error=invalid_request&state=" + state
         return redirect(response, code=302)
 
