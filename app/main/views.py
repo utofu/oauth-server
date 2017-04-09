@@ -1,6 +1,6 @@
 from . import main
 from .. import db
-from ..models import Clients
+from ..models import Clients, Users, Tokens
 
 from flask import request, render_template, redirect
 from ..helpers import secure_jsonify as jsonify
@@ -36,7 +36,7 @@ def client_identifier():
             return redirect(response, code=302)
 
         client = Clients.fetch(client_id)
-        if not client or client['redirect_uri'] != redirect_uri:
+        if not client or client.redirect_uri != redirect_uri:
             response = "#error=invalid_request&state=" + state
             return redirect(response, code=302)
 
@@ -50,31 +50,33 @@ def auth():
     password = request.form.get('password')
     client_id = request.form.get('client_id')
     state = request.form.get('state')
-    if not Users.fetch(user_id, password):
+
+    user = Users.fetch(user_id, password)
+    if user
         response = redirect_uri + "#error=invalid_request&state=" + state
         return redirect(response, code=302)
 
-    scopes = Users.fetch(user_id, password)['scopes']
+    scopes = user.scopes
 
     # token 発行
     token = Tokens.new(client_id, user_id, scopes)
     db.session.add(token)
     db.session.commit()
 
-    # 302 にredirect_uriを送る
+    # アクセストークンを付けてリダイレクト
     response = {}
-    response['access_token'] = token['access_token']
+    response['access_token'] = token.access_token
     response['token_type'] = 'bearer'
-    response['expires_in'] = (token['access_token_expire_date'] - datetime.now()).total_seconds()
-    response['scope'] = token['scope']
+    response['expires_in'] = (token.access_token_expire_date - datetime.now()).total_seconds()
+    response['scopes'] = token.scopes
     response['state'] = state
 
     client = Clients.fetch(client_id)
     if not client:
         response = "#error=invalid_request&state=" + response['state']
-        return redirect_uri(response, code=302)
+        return redirect(response, code=302)
 
-    redirect_uri = client['redirect_uri']
+    redirect_uri = client.redirect_uri
     uri = []
     for k, v in response:
         uri.append("{k}={v}".format(k=k, v=v))
