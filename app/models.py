@@ -46,7 +46,19 @@ class Tokens(Base, ScopesMixin):
     def fetch_by_access_token(cls, access_token):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
     @classmethod
-    def new(cls,access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code)
+    def new(cls,access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code):
+        return cls(access_token=sha256(uuid4().hex).hexdigest(),access_token_expire_date=datetime.datetime.now()+datetime.timedelta(hour=1),refresh_token=access_token=sha256(uuid4().hex).hexdigest(),refresh_token_expire_date=datetime.datetime.now()+datetime.timedelta(day=3),_scopes=_scopes,user_id=user_id,client_id=client_id,grant_code=grant_code)
+    def to_dict(self):
+    r = {
+        'access_token': self.access_token,
+        'token_type': bearer,
+        'expires_in': self.access_token_expire_date,
+        'refresh_token':self.refresh_token,
+        'example_parameter': bearer
+            }
+    if show_secret:
+        r.update({'secret': self.secret})
+    return r
 
 class GrantCodes(Base, ScopesMixin):
     __tablename__ = 'grant_codes'
@@ -71,8 +83,9 @@ class GrantCodes(Base, ScopesMixin):
     def fetch_by_code(cls, code):
         return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
     @classmethod
-    def new(cls,code,expire_date,scope,user_id,client_id,redirect_uri):
-        return cls(code=code,expire_date=expire_date,scope=scope,user_id=user_id,client_id=client_id,redirect_uri=redirect_uri)
+    def new(cls,scope,user_id,client_id,redirect_uri):
+        return cls(code=sha256(uuid4().hex).hexdigest(),expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30),scope=scope,user_id=user_id,client_id=client_id,redirect_uri=redirect_uri)
+
 
 
 class Users(Base, ScopesMixin):
