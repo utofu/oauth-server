@@ -1,3 +1,4 @@
+# coding: utf-8
 from . import main
 from .. import db
 from ..models import Clients, Users, Tokens
@@ -43,7 +44,7 @@ def client_identifier():
         # ユーザ認証
         return render_template('form.html', client_id=client_id, state=state)
 
-@main.route('/auth', method=['POST'])
+@main.route('/auth', methods=['POST'])
 def auth():
     from datetime import datetime, timedelta
     user_id = request.form.get('user_id')

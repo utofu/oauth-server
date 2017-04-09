@@ -3,7 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = "sqlite:///"
+    SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/poe.sql"
     @staticmethod
     def init_app(app):
         pass
