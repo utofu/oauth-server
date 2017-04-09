@@ -51,10 +51,9 @@ class Tokens(Base, ScopesMixin):
     def to_dict(self):
     r = {
         'access_token': self.access_token,
-        'token_type': bearer,
-        'expires_in': self.access_token_expire_date,
-        'refresh_token':self.refresh_token,
-        'example_parameter': bearer
+        'token_type': "bearer",
+        'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
+        'refresh_token':self.refresh_token
             }
     if show_secret:
         r.update({'secret': self.secret})

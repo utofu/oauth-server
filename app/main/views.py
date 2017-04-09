@@ -65,13 +65,13 @@ def req_auth():
     redirect_uri=request.form.get("redirect_uri")
     scope=request.form.get("scope")
     state=request.form.get("state")
-    if redirect_uri is None:
-        redirect_uri = None
-    if state is None:
-        state = None
+
 
     """resorce-server approval"""
     client = Clients.fetch(client_id)
+        if client is None:
+            return redirect(client.redirect_uri+"?error=invalid_request")
+
 
     if not Users.fetch(id, password):
         return redirect(client.redirect_uri+"?error=access_denied")
@@ -88,10 +88,10 @@ def req_auth():
 
 @main.route('/req_access',methods=['POST'])
 def req_access():
-    grant_type = request.form["grant_type"]
-    code = request.form["code"]
-    redirect_uri = request.form["redirect_uri"]
-    client_id = request.form["client_id"]
+    grant_type = request.form.get("grant_type")
+    code = request.form.get("code")
+    redirect_uri = request.form.get("redirect_uri")
+    client_id = request.form.get("client_id")
 
     grant_code = GrantCodes.fetch_by_code(code)
     if grant_code is None:
@@ -107,7 +107,9 @@ def req_access():
         if grant_type != "authorization_code" or code is None or client_id is None or redirect_uri is None:
             #return err msg
         else :
-            redirect_uri == grant_code.redirect_uri
+            if redirect_uri != grant_code.redirect_uri:
+                return redirect(client.redirect_uri+"?error=invalid_request")
+
 
     token = Tokens.new(access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code)
     db.session.add(token)
