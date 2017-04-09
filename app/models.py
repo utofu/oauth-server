@@ -48,15 +48,18 @@ class Tokens(Base, ScopesMixin):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
 
     @classmethod
-    def new(cls, client_id):
+    def new(cls, client_id, user_id, scopes):
+        token = cls()
+
         from uuid import uuid4
         from hashlib import sha256
-        access_token = sha256(uuid4().hex).hexdigest()
-        access_token_expire_date = datetime.now()+timedelta(hours = 1)
+        token.access_token = sha256(uuid4().hex).hexdigest()
+        token.access_token_expire_date = datetime.now()+timedelta(hours = 1)
 
-        refresh_token = sha256(uuid4().hex).hexdigest()
-        refresh_token_expire_date = datetime.now()+timedelta(hours = 1)
-
+        token.client_id = client_id
+        token.user_id = user_id
+        token.scopes = scopes
+        return token
 
 
 class GrantCodes(Base, ScopesMixin):

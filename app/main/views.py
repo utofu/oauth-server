@@ -50,25 +50,37 @@ def client_identifier():
             return 
 
         # ユーザ認証
-        return render_template('form.html')
+        return render_template('form.html', client_id=client_id, state=state)
 
-@main.route('/redirect_with_token', method=['GET'])
-def redirect_with_token():
+@main.route('/auth', method=['POST'])
+def auth():
+    from datetime import datetime
+    from datetime import timedelta
+    user_id = request.form['user_id'] 
+    password = request.form['password']
+    client_id = request.form['client_id']
+    if not Users.fetch(user_id, password):
+
+    scopes = Users.fetch(user_id, password)['scopes']
+
     # token 発行
-    token = Tokens.new(client_id)
-
-    token_type = 'bearer'
-    expires_in = 
-
-
-
-
+    token = Tokens.new(client_id, user_id, scopes)
+    db.session.add(token)
+    db.session.commit()
 
     # 302 にredirect_uriを送る
-    expires_in
-    scope
-    state = 
+    response = {}
+    response['access_token'] = token['access_token']
+    response['token_type'] = 'bearer'
+    response['expires_in'] = token['access_token_expire_date'] - datetime.now()
+    response['scope'] = token['scope']
+    response['state'] = request.form['state']
 
-    return redirect(, code=302)
+    redirect_uri = Clients.fetch(client_id)['redirect_uri']
 
+    uri = []
+    for k, v in response:
+        tmp.append("{k}={v}".format(k=k, v=v))
+    url = redirect_uri + "#" + "&".join(uri)
 
+    return redirect(url, code=302)

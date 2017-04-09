@@ -1,5 +1,15 @@
 <!doctype html>
 <title>認可</title>
 <div>
-  <a href="/redirect_with_token">認可</a>
+  <form action="{{ url_for('auth') }}" method=post>
+    <dl>
+      <dt>Username:
+      <dd><input type=text name=user_id>
+      <dt>Password:
+      <dd><input type=password name=password>
+        <input type="hidden" name="client_id" value="{{ client_id }}">
+        <input type="hidden" name="state" value="{{ state }}">
+      <dd><input type=submit value=Login>
+    </dl>
+  </form>
 </div>
