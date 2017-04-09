@@ -53,8 +53,9 @@ def auth():
     user_id = request.form.get['user_id']
     password = request.form.get['password']
     client_id = request.form.get['client_id']
+    state = request.form.get['state']
     if not Users.fetch(user_id, password):
-        response = redirect_uri + "#error=invalid_request&state=" + request.form['state']
+        response = redirect_uri + "#error=invalid_request&state=" + state
         return redirect_uri(response, code=302)
 
     scopes = Users.fetch(user_id, password)['scopes']
@@ -70,7 +71,7 @@ def auth():
     response['token_type'] = 'bearer'
     response['expires_in'] = token['access_token_expire_date'] - datetime.now()
     response['scope'] = token['scope']
-    response['state'] = request.form['state']
+    response['state'] = state
 
     client = Clients.fetch(client_id)
     if not client:
