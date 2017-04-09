@@ -1,8 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 try: 
     from . import db
 except ValueError:

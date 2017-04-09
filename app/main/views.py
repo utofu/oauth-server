@@ -24,14 +24,6 @@ def op_clients():
         return jsonify({'client': client.to_dict(show_secret=True)})
 
 
-def client_start():
-    regist = op_clients()
-    payload = {'response_type': 'token',
-            'client_id': regist['name'],
-            'redirect_uri': regist['redirect_uri']}
-    requests.get("/client_identifier", params=payload)
-
-
 @main.route('/client_identifier', methods=['GET'])
 def client_identifier():
     if request.method == 'GET':
@@ -58,9 +50,9 @@ def client_identifier():
 @main.route('/auth', method=['POST'])
 def auth():
     from datetime import datetime, timedelta
-    user_id = request.form['user_id']
-    password = request.form['password']
-    client_id = request.form['client_id']
+    user_id = request.form.get['user_id']
+    password = request.form.get['password']
+    client_id = request.form.get['client_id']
     if not Users.fetch(user_id, password):
         response = redirect_uri + "#error=invalid_request&state=" + request.form['state']
         return redirect_uri(response, code=302)
