@@ -47,19 +47,32 @@ class Tokens(Base, ScopesMixin):
         return db.session.query(Tokens).filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
 
     @classmethod
-    def new(cls, client_id, user_id, scopes):
+    def new(cls, user_id, client_id, scopes, grant_code=None, is_refresh=False):
         token = cls()
-
         from uuid import uuid4
         from hashlib import sha256
-        token.access_token = sha256(uuid4().hex).hexdigest()
-        token.access_token_expire_date = datetime.now()+timedelta(hours = 1)
 
-        token.client_id = client_id
-        token.user_id = user_id
-        token._scopes = scopes
+        token.access_token=sha256(uuid4().hex).hexdigest()
+        token.access_token_expire_date=datetime.now()+timedelta(hours=1)
+        token._scopes=scopes
+        token.user_id=user_id
+        token.client_id=client_id
+        if is_refresh:
+            token.refresh_token=sha256(uuid4().hex).hexdigest()
+            token.refresh_token_expire_date=datetime.now()+timedelta(days=3)
+        if grant_code:
+            token.grant_code=grant_code
+
         return token
 
+    def to_dict(self):
+        r = {
+            'access_token': self.access_token,
+            'token_type': "bearer",
+            'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
+            'refresh_token':self.refresh_token
+                }
+        return r
 
 class GrantCodes(Base, ScopesMixin):
     __tablename__ = 'grant_codes'
@@ -70,6 +83,7 @@ class GrantCodes(Base, ScopesMixin):
 
     user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=False)
     client_id = Column(String(128), ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    redirect_uri = Column(String(256), nullable=False)
 
     tokens = db.relationship(
         'Tokens',
@@ -78,6 +92,25 @@ class GrantCodes(Base, ScopesMixin):
         lazy='dynamic',
         cascade='all, delete-orphan',
         backref="granted_code")
+
+    @classmethod
+    def fetch_by_code(cls, code):
+        return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+    @classmethod
+    def new(cls, user_id, client_id, redirect_uri, scope):
+        grant_code = cls()
+
+        from uuid import uuid4
+        from hashlib import sha256
+        grant_code.code=sha256(uuid4().hex).hexdigest()
+        grant_code.expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30)
+        grant_code._scopes=scope
+        grant_code.user_id=user_id
+        grant_code.client_id=client_id
+        grant_code.redirect_uri = redirect_uri
+
+        return grant_code
+
 
 
 class Users(Base, ScopesMixin):
@@ -206,7 +239,6 @@ class Clients(Base):
     @classmethod
     def fetch(cls, client_id):
         return db.session.query(Clients).filter_by(id=client_id).first()
-
 
 if __name__ == "__main__":
     Base.metadata.create_all(db.get_engine(app))
