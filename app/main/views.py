@@ -54,7 +54,7 @@ def auth():
     # client auth
     client = Clients.fetch(client_id)
     if not client:
-        response = "#error=invalid_request&state=" + response['state']
+        response = "#error=invalid_request&state=" + state
         return redirect(response, code=302)
 
     redirect_uri = client.redirect_uri
