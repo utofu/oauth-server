@@ -99,4 +99,4 @@ def auth():
         uri.append("{k}={v}".format(k=k, v=v))
     url = redirect_uri + "#" + "&".join(uri)
 
-    return redirect(url, code=302)
+    return redirect(url)
