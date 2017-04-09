@@ -118,6 +118,7 @@ def req_access():
 
     if False :
         #err msg
+        pass
     else :
         return jsonify(token.to_dict())
 
