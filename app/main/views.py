@@ -40,8 +40,8 @@ def client_identifier():
         response_type = query.get('response_type', None)
         client_id = query.get('client_id', None)
         redirect_uri = query.get('redirect_uri', None)
-        scope = query.get(query['scope'], None)
-        state = query.get('state'], None)
+        scope = query.get('scope', None)
+        state = query.get('state', None)
 
         if not response_type == 'token':
             response = redirect_uri + "#error=invalid_request&state=" + state
