@@ -1,3 +1,4 @@
+# coding: utf-8
 from . import main
 from .. import db
 from ..models import Users, GrantCodes, Clients, Tokens
@@ -13,7 +14,7 @@ import datetime
 @main.route('/clients', methods=['GET', 'POST'])
 def op_clients():
     if request.method == 'GET':
-        clients = [c.to_dict() for c in Clients.query.all()]
+        clients = [c.to_dict() for c in db.session.query(Clients).all()]
         return jsonify({'clients': clients})
     elif request.method == 'POST':
         data = json.loads(request.data)
@@ -24,20 +25,22 @@ def op_clients():
         return jsonify({'client': client.to_dict(show_secret=True)})
 
 
-@main.route('/approval', methods=['GET','POST'])
+@main.route('/approval', methods=['GET'])
 def op_approval():
     if request.method == 'GET':
-        response_type = request.get('response_type', None)
-        client_id = request.get('client_id', None)
-        redirect_uri = request.get('redirect_uri', None)
-        scope = request.get('scope', None)
-        state = request.get('state', None)
+        response_type = request.args.get('response_type', None)
+        client_id = request.args.get('client_id', None)
+        redirect_uri = request.args.get('redirect_uri', None)
+        scope = request.args.get('scope', None)
+        state = request.args.get('state', None)
 
 
         """resorce-server approval"""
         client = Clients.fetch(client_id)
-        if client is None:
-            return redirect(client.redirect_uri+"?error=invalid_request")
+        if client is None and redirect_uri is None:
+            return "?error=invalid_request"
+        elif client is None :
+            return redirect(redirect_uri+"?error=invalid_request")
 
         if response_type != "code" or client_id is None or scope is None:
             """invalid_request"""
@@ -93,23 +96,26 @@ def req_access():
     grant_code = GrantCodes.fetch_by_code(code)
     if grant_code is None:
         #return err msg
-        return redirect(redirect_uri+"?error=invalid_request")
+        return redirect(redirect_uri+"?error=invalid_request1")
 
     if grant_code.client_id != client_id :
         #return err msg
-        return redirect(redirect_uri+"?error=invalid_request")
+        return redirect(redirect_uri+"?error=invalid_request2")
 
     if grant_code.redirect_uri is None :
         if grant_type != "authorization_code" or code is None or client_id is None:
             #return err msg
-            return redirect(redirect_uri+"?error=invalid_request")
+            return redirect(redirect_uri+"?error=invalid_request3")
     else :
         if grant_type != "authorization_code" or code is None or client_id is None or redirect_uri is None:
             #return err msg
-            return redirect(redirect_uri+"?error=invalid_request")
+            return redirect(redirect_uri+"?error=invalid_request4")
         else :
-            if redirect_uri != grant_code.redirect_uri:
-                return redirect(redirect_uri+"?error=invalid_request")
+            if grant_code.redirect_uri is not None:    
+                if redirect_uri != grant_code.redirect_uri:
+                    print redirect_uri, "+" , type(grant_code.redirect_uri)
+                    return redirect(redirect_uri+"?error=invalid_request5")
+
 
 
     token = Tokens.new(grant_code._scopes,grant_code.user_id,client_id,code)

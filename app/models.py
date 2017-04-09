@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
-from datetime import datetime
+from datetime import datetime, timedelta
 try: 
     from . import db
 except ValueError:
@@ -44,7 +44,8 @@ class Tokens(Base, ScopesMixin):
 
     @classmethod
     def fetch_by_access_token(cls, access_token):
-        return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+        return db.session.query(Tokens).filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+
     @classmethod
     def new(cls,_scopes,user_id,client_id,grant_code):
         token = cls()
@@ -52,9 +53,9 @@ class Tokens(Base, ScopesMixin):
         from uuid import uuid4
         from hashlib import sha256
         token.access_token=sha256(uuid4().hex).hexdigest()
-        token.access_token_expire_date=datetime.datetime.now()+datetime.timedelta(hour=1)
+        token.access_token_expire_date=datetime.now()+timedelta(hours=1)
         token.refresh_token=sha256(uuid4().hex).hexdigest()
-        token.refresh_token_expire_date=datetime.datetime.now()+datetime.timedelta(day=3)
+        token.refresh_token_expire_date=datetime.now()+timedelta(days=3)
         token._scopes=_scopes
         token.user_id=user_id
         token.client_id=client_id
@@ -66,7 +67,7 @@ class Tokens(Base, ScopesMixin):
         r = {
             'access_token': self.access_token,
             'token_type': "bearer",
-            'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
+            'expires_in': (self.access_token_expire_date - datetime.now()).total_seconds(),
             'refresh_token':self.refresh_token
                 }
         return r
@@ -80,7 +81,7 @@ class GrantCodes(Base, ScopesMixin):
 
     user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=False)
     client_id = Column(String(128), ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
-    redirect_uri = Column(String(256), nullable=False)
+    redirect_uri = Column(String(256), nullable=True)
 
     tokens = db.relationship(
         'Tokens',
@@ -92,7 +93,7 @@ class GrantCodes(Base, ScopesMixin):
 
     @classmethod
     def fetch_by_code(cls, code):
-        return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+        return db.session.query(GrantCodes).filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
     @classmethod
     def new(cls,scope,user_id,client_id,redirect_uri):
         grant_code = cls()
@@ -100,7 +101,7 @@ class GrantCodes(Base, ScopesMixin):
         from uuid import uuid4
         from hashlib import sha256
         grant_code.code=sha256(uuid4().hex).hexdigest()
-        grant_code.expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30)
+        grant_code.expire_date=datetime.now()+timedelta(minutes=30)
         grant_code._scopes=scope
         grant_code.user_id=user_id
         grant_code.client_id=client_id
@@ -155,7 +156,7 @@ class Users(Base, ScopesMixin):
     @classmethod
     def fetch(cls, user_id, user_password):
         # type: (str, str) -> Union[Users, None]
-        return cls.query.filter_by(id=user_id, user_password=user_password).first()
+        return db.session.query(Users).filter_by(id=user_id, password=user_password).first()
 
     def create_image(self, data):
         # type: (str) -> Images
@@ -180,7 +181,7 @@ class Images(Base):
 
     @classmethod
     def fetch(cls, id):
-        return cls.query.filter_by(id=id).first()
+        return db.session.query(Images).filter_by(id=id).first()
 
     def to_dict(self):
         return{
@@ -234,7 +235,7 @@ class Clients(Base):
         return r
     @classmethod
     def fetch(cls,id):
-        return cls.query.filter_by(id=id).first()
+        return db.session.query(Clients).filter_by(id=id).first()
 
 
 
