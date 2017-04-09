@@ -30,16 +30,28 @@ def client_identifier():
         client_id = query.get('client_id', None)
         redirect_uri = query.get('redirect_uri', None)
         scope = query.get('scope', None)
-        state = query.get('state', None)
+        state = query.get('state', '')
 
+        query = []
+
+        if state:
+            query['state'] = state
+
+        error = False
         if not response_type == 'token':
-            response = redirect_uri + "#error=invalid_request&state=" + state
-            return redirect(response, code=302)
+            query['error'] = 'unsupported_response_type'
+            error = True
 
         client = Clients.fetch(client_id)
-        if not client or client.redirect_uri != redirect_uri:
-            response = "#error=invalid_request&state=" + state
-            return redirect(response, code=302)
+        elif not client or client.redirect_uri != redirect_uri:
+            query['error'] = 'unauthorized_client'
+            error = True
+
+        if error:
+            for k, v in query:
+                uri.append("{k}={v}".format(k=k, v=v))
+            url = redirect_uri + "#" + "&".join(uri)
+            return redirect(url, code=302)
 
         # ユーザ認証
         return render_template('form.html', client_id=client_id, state=state)
