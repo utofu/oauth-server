@@ -42,11 +42,9 @@ def client_identifier():
         if not response_type == 'token':
             query['error'] = 'unsupported_response_type'
             error = True
-
-        elif not client or client_id:
+        elif not client or not client_id:
             query['error'] = 'invalid_request'
             error = True
-
         elif client.redirect_uri != redirect_uri:
             # 不正なredirect_uriの場合はリダイレクトさせない。
             query['error'] = 'unauthorized_client'
