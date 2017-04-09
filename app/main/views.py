@@ -36,8 +36,8 @@ def op_approval():
 
         """resorce-server approval"""
         client = Clients.fetch(client_id)
-            if client is None:
-                return redirect(client.redirect_uri+"?error=invalid_request")
+        if client is None:
+            return redirect(client.redirect_uri+"?error=invalid_request")
 
         if response_type != "code" or client_id is None or scope is None:
             """invalid_request"""
@@ -66,8 +66,8 @@ def req_auth():
 
     """resorce-server approval"""
     client = Clients.fetch(client_id)
-        if client is None:
-            return redirect(client.redirect_uri+"?error=invalid_request")
+    if client is None:
+        return redirect(client.redirect_uri+"?error=invalid_request")
 
 
     if not Users.fetch(id, password):
@@ -116,7 +116,7 @@ def req_access():
     db.session.add(token)
     db.session.commit()
 
-    if #requestが不正 :
+    if False :
         #err msg
     else :
         return jsonify(token.to_dict())
