@@ -57,7 +57,7 @@ class Tokens(Base, ScopesMixin):
 
         token.client_id = client_id
         token.user_id = user_id
-        token.scopes = scopes
+        token._scopes = scopes
         return token
 
 

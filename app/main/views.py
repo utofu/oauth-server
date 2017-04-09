@@ -59,7 +59,8 @@ def client_identifier():
             return redirect(url, code=302)
 
         # ユーザ認証
-        return render_template('form.html', client_id=client_id, state=state)
+        return render_template('form.html', client_id=client_id, state=state,
+                scope=scope)
 
 @main.route('/auth', methods=['POST'])
 def auth():
@@ -68,6 +69,7 @@ def auth():
     password = request.form.get('password')
     client_id = request.form.get('client_id')
     state = request.form.get('state')
+    scope = request.form.get('scope')
 
     error = False
     query = {}
@@ -97,10 +99,10 @@ def auth():
         url = redirect_uri + "#" + "&".join(uri)
         return redirect(url, code=302)
 
-    scopes = user.scopes
+    # scopes = user.scopes
 
     # token 発行
-    token = Tokens.new(client_id, user_id, scopes)
+    token = Tokens.new(client_id, user_id, scope)
     db.session.add(token)
     db.session.commit()
 
