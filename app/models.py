@@ -45,7 +45,8 @@ class Tokens(Base, ScopesMixin):
     @classmethod
     def fetch_by_access_token(cls, access_token):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
-
+    @classmethod
+    def new(cls,access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code)
 
 class GrantCodes(Base, ScopesMixin):
     __tablename__ = 'grant_codes'
@@ -56,6 +57,7 @@ class GrantCodes(Base, ScopesMixin):
 
     user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=False)
     client_id = Column(String(128), ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    redirect_uri = Column(String(256), nullable=False)
 
     tokens = db.relationship(
         'Tokens',
@@ -69,8 +71,8 @@ class GrantCodes(Base, ScopesMixin):
     def fetch_by_code(cls, code):
         return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
     @classmethod
-    def new(cls,code,expire_date,scope,user_id,client_id):
-        return cls(code=code,expire_date=expire_date,scope=scope,user_id=user_id,client_id=client_id)
+    def new(cls,code,expire_date,scope,user_id,client_id,redirect_uri):
+        return cls(code=code,expire_date=expire_date,scope=scope,user_id=user_id,client_id=client_id,redirect_uri=redirect_uri)
 
 
 class Users(Base, ScopesMixin):
