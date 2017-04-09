@@ -51,8 +51,17 @@ def auth():
     client_id = request.form.get('client_id')
     state = request.form.get('state')
 
+    # client auth
+    client = Clients.fetch(client_id)
+    if not client:
+        response = "#error=invalid_request&state=" + response['state']
+        return redirect(response, code=302)
+
+    redirect_uri = client.redirect_uri
+
+    # user auth
     user = Users.fetch(user_id, password)
-    if user:
+    if not user:
         response = redirect_uri + "#error=invalid_request&state=" + state
         return redirect(response, code=302)
 
@@ -71,12 +80,6 @@ def auth():
     response['scopes'] = token.scopes
     response['state'] = state
 
-    client = Clients.fetch(client_id)
-    if not client:
-        response = "#error=invalid_request&state=" + response['state']
-        return redirect(response, code=302)
-
-    redirect_uri = client.redirect_uri
     uri = []
     for k, v in response:
         uri.append("{k}={v}".format(k=k, v=v))
