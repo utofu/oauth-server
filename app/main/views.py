@@ -53,7 +53,7 @@ def client_identifier():
 
         if error:
             uri = []
-            for k, v in query:
+            for k, v in query.items():
                 uri.append("{k}={v}".format(k=k, v=v))
             url = redirect_uri + "#" + "&".join(uri)
             return redirect(url, code=302)
@@ -70,26 +70,32 @@ def auth():
     state = request.form.get('state')
 
     error = False
+    query = {}
+
+    if state:
+        query['state'] = state
 
     # client auth
     client = Clients.fetch(client_id)
 
-    if not client or client.redirect_uri != redirect_uri:
-        query['error'] = 'unauthorized_client'
+    if not client or not client_id:
+        query['error'] = 'invalid_request'
         error = True
-
-    if not client:
-        response = "#error=invalid_request&state=" + state
-        return redirect(response, code=302)
-
 
     redirect_uri = client.redirect_uri
 
     # user auth
     user = Users.fetch(user_id, password)
     if not user:
-        response = redirect_uri + "#error=invalid_request&state=" + state
-        return redirect(response, code=302)
+        query['error'] = 'access_denied'
+        error = True
+
+    if error:
+        uri = []
+        for k, v in query.items():
+            uri.append("{k}={v}".format(k=k, v=v))
+        url = redirect_uri + "#" + "&".join(uri)
+        return redirect(url, code=302)
 
     scopes = user.scopes
 
@@ -107,7 +113,7 @@ def auth():
     response['state'] = state
 
     uri = []
-    for k, v in response:
+    for k, v in response.items():
         uri.append("{k}={v}".format(k=k, v=v))
     url = redirect_uri + "#" + "&".join(uri)
 
