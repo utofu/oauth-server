@@ -47,7 +47,7 @@ def client_identifier():
             response = redirect_uri + "#error=invalid_request&state=" + state
             return redirect_uri(response, code=302)
 
-        client = Clients.fetch(client_id, redirect_uri)
+        client = Clients.fetch(client_id)
         if not client or client['redirect_uri'] != redirect_uri:
             response = "#error=invalid_request&state=" + state
             return redirect_uri(response, code=302)
@@ -62,6 +62,8 @@ def auth():
     password = request.form['password']
     client_id = request.form['client_id']
     if not Users.fetch(user_id, password):
+        response = redirect_uri + "#error=invalid_request&state=" + request.form['state']
+        return redirect_uri(response, code=302)
 
     scopes = Users.fetch(user_id, password)['scopes']
 
@@ -78,11 +80,12 @@ def auth():
     response['scope'] = token['scope']
     response['state'] = request.form['state']
 
-    if not Clients.fetch(client_id):
-        response = redirect_uri + "#error=invalid_request&state=" + response['state']
+    client = Clients.fetch(client_id)
+    if not client:
+        response = "#error=invalid_request&state=" + response['state']
         return redirect_uri(response, code=302)
 
-    redirect_uri = ['redirect_uri']
+    redirect_uri = client['redirect_uri']
     uri = []
     for k, v in response:
         uri.append("{k}={v}".format(k=k, v=v))

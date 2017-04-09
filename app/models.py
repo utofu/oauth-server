@@ -205,8 +205,8 @@ class Clients(Base):
         return r
 
     @classmethod
-    def fetch(cls, client_id, redirect_uri):
-        return cls.query.filter_by(client_id=client_id, redirect_uri=redirect_uri).first()
+    def fetch(cls, client_id):
+        return cls.query.filter_by(client_id=client_id).first()
 
 
 if __name__ == "__main__":
