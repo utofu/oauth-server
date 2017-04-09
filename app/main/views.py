@@ -2,13 +2,9 @@ from . import main
 from .. import db
 from ..models import Clients
 
-from flask import request
+from flask import request, render_template, redirect
 from ..helpers import secure_jsonify as jsonify
 import simplejson as json
-
-import requests
-
-
 
 @main.route('/clients', methods=['GET', 'POST'])
 def op_clients():
@@ -37,12 +33,12 @@ def client_identifier():
 
         if not response_type == 'token':
             response = redirect_uri + "#error=invalid_request&state=" + state
-            return redirect_uri(response, code=302)
+            return redirect(response, code=302)
 
         client = Clients.fetch(client_id)
         if not client or client['redirect_uri'] != redirect_uri:
             response = "#error=invalid_request&state=" + state
-            return redirect_uri(response, code=302)
+            return redirect(response, code=302)
 
         # ユーザ認証
         return render_template('form.html', client_id=client_id, state=state)
@@ -50,13 +46,13 @@ def client_identifier():
 @main.route('/auth', method=['POST'])
 def auth():
     from datetime import datetime, timedelta
-    user_id = request.form.get['user_id']
-    password = request.form.get['password']
-    client_id = request.form.get['client_id']
-    state = request.form.get['state']
+    user_id = request.form.get('user_id')
+    password = request.form.get('password')
+    client_id = request.form.get('client_id')
+    state = request.form.get('state')
     if not Users.fetch(user_id, password):
         response = redirect_uri + "#error=invalid_request&state=" + state
-        return redirect_uri(response, code=302)
+        return redirect(response, code=302)
 
     scopes = Users.fetch(user_id, password)['scopes']
 
@@ -69,7 +65,7 @@ def auth():
     response = {}
     response['access_token'] = token['access_token']
     response['token_type'] = 'bearer'
-    response['expires_in'] = token['access_token_expire_date'] - datetime.now()
+    response['expires_in'] = (token['access_token_expire_date'] - datetime.now()).total_seconds()
     response['scope'] = token['scope']
     response['state'] = state
 
