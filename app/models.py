@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
-from datetime import datetime
+from datetime import datetime, timedelta
 try: 
     from . import db
 except ValueError:
@@ -44,7 +44,21 @@ class Tokens(Base, ScopesMixin):
 
     @classmethod
     def fetch_by_access_token(cls, access_token):
-        return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+        return db.session.query(Tokens).filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+
+    @classmethod
+    def new(cls, client_id, user_id, scopes):
+        token = cls()
+
+        from uuid import uuid4
+        from hashlib import sha256
+        token.access_token = sha256(uuid4().hex).hexdigest()
+        token.access_token_expire_date = datetime.now()+timedelta(hours = 1)
+
+        token.client_id = client_id
+        token.user_id = user_id
+        token._scopes = scopes
+        return token
 
 
 class GrantCodes(Base, ScopesMixin):
@@ -101,7 +115,7 @@ class Users(Base, ScopesMixin):
     def new_user(cls, user_id, user_password):
         # type: (str, str, List[str]) -> Users
         scopes = ['add_image', 'get_image', 'list_image', 'delete_image']
-        return cls(id=user_id, user_password=user_password, _scopes=" ".join(scopes))
+        return cls(id=user_id, password=user_password, _scopes=" ".join(scopes))
 
     @classmethod
     def new_restricted_user(cls, user_id, user_password):
@@ -111,7 +125,7 @@ class Users(Base, ScopesMixin):
     @classmethod
     def fetch(cls, user_id, user_password):
         # type: (str, str) -> Union[Users, None]
-        return cls.query.filter_by(id=user_id, user_password=user_password).first()
+        return db.session.query(Users).filter_by(id=user_id, password=user_password).first()
 
     def create_image(self, data):
         # type: (str) -> Images
@@ -136,7 +150,7 @@ class Images(Base):
 
     @classmethod
     def fetch(cls, id):
-        return cls.query.filter_by(id=id).first()
+        return db.session.query(Images).filter_by(id=id).first()
 
     def to_dict(self):
         return{
@@ -189,8 +203,9 @@ class Clients(Base):
             r.update({'secret': self.secret})
         return r
 
-
-
+    @classmethod
+    def fetch(cls, client_id):
+        return db.session.query(Clients).filter_by(id=client_id).first()
 
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
+# coding: utf-8
 from . import main
 from .. import db
-from ..models import Clients
+from ..models import Clients, Users, Tokens
 
-from flask import request
+from flask import request, render_template, redirect
 from ..helpers import secure_jsonify as jsonify
 import simplejson as json
-
-
 
 @main.route('/clients', methods=['GET', 'POST'])
 def op_clients():
@@ -21,3 +20,103 @@ def op_clients():
         db.session.commit()
         return jsonify({'client': client.to_dict(show_secret=True)})
 
+
+@main.route('/client_identifier', methods=['GET'])
+def client_identifier():
+    if request.method == 'GET':
+        query = request.args
+
+        response_type = query.get('response_type', None)
+        client_id = query.get('client_id', None)
+        redirect_uri = query.get('redirect_uri', None)
+        scope = query.get('scope', None)
+        state = query.get('state', '')
+
+        query = {}
+        client = Clients.fetch(client_id)
+
+        if state:
+            query['state'] = state
+
+        error = False
+        if not response_type == 'token':
+            query['error'] = 'unsupported_response_type'
+            error = True
+        elif not client or not client_id:
+            query['error'] = 'invalid_request'
+            error = True
+        elif client.redirect_uri != redirect_uri:
+            # 不正なredirect_uriの場合はリダイレクトさせない。
+            query['error'] = 'unauthorized_client'
+            redirect_uri=''
+            error = True
+
+        if error:
+            uri = []
+            for k, v in query.items():
+                uri.append("{k}={v}".format(k=k, v=v))
+            url = redirect_uri + "#" + "&".join(uri)
+            return redirect(url, code=302)
+
+        # ユーザ認証
+        return render_template('form.html', client_id=client_id, state=state,
+                scope=scope)
+
+@main.route('/auth', methods=['POST'])
+def auth():
+    from datetime import datetime, timedelta
+    user_id = request.form.get('user_id')
+    password = request.form.get('password')
+    client_id = request.form.get('client_id')
+    state = request.form.get('state')
+    scope = request.form.get('scope')
+
+    error = False
+    query = {}
+
+    if state:
+        query['state'] = state
+
+    # client auth
+    client = Clients.fetch(client_id)
+
+    if not client or not client_id:
+        query['error'] = 'invalid_request'
+        error = True
+
+    redirect_uri = client.redirect_uri
+
+    # user auth
+    user = Users.fetch(user_id, password)
+    if not user:
+        query['error'] = 'access_denied'
+        error = True
+
+    if error:
+        uri = []
+        for k, v in query.items():
+            uri.append("{k}={v}".format(k=k, v=v))
+        url = redirect_uri + "#" + "&".join(uri)
+        return redirect(url, code=302)
+
+    # scopes = user.scopes
+
+    # token 発行
+    token = Tokens.new(client_id, user_id, scope)
+    db.session.add(token)
+    db.session.commit()
+
+    # アクセストークンを付けてリダイレクト
+    response = {}
+    response['access_token'] = token.access_token
+    response['token_type'] = 'bearer'
+    response['expires_in'] = (token.access_token_expire_date - datetime.now()).total_seconds()
+    response['scopes'] = token.scopes
+    response['state'] = state
+
+    uri = []
+    for k, v in response.items():
+        uri.append("{k}={v}".format(k=k, v=v))
+    url = redirect_uri + "#" + "&".join(uri)
+
+    return redirect(url, code=302)
