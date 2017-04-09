@@ -47,7 +47,21 @@ class Tokens(Base, ScopesMixin):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
     @classmethod
     def new(cls,access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code):
-        return cls(access_token=sha256(uuid4().hex).hexdigest(),access_token_expire_date=datetime.datetime.now()+datetime.timedelta(hour=1),refresh_token=access_token=sha256(uuid4().hex).hexdigest(),refresh_token_expire_date=datetime.datetime.now()+datetime.timedelta(day=3),_scopes=_scopes,user_id=user_id,client_id=client_id,grant_code=grant_code)
+        token = cls()
+
+        from uuid import uuid4
+        from hashlib import sha256
+        token.access_token=sha256(uuid4().hex).hexdigest()
+        token.access_token_expire_date=datetime.datetime.now()+datetime.timedelta(hour=1)
+        token.refresh_token=sha256(uuid4().hex).hexdigest()
+        token.refresh_token_expire_date=datetime.datetime.now()+datetime.timedelta(day=3)
+        token._scopes=_scopes
+        token.user_id=user_id
+        token.client_id=client_id
+        token.grant_code=grant_code
+
+        return token
+
     def to_dict(self):
     r = {
         'access_token': self.access_token,
@@ -83,7 +97,18 @@ class GrantCodes(Base, ScopesMixin):
         return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
     @classmethod
     def new(cls,scope,user_id,client_id,redirect_uri):
-        return cls(code=sha256(uuid4().hex).hexdigest(),expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30),scope=scope,user_id=user_id,client_id=client_id,redirect_uri=redirect_uri)
+        grant_code = cls()
+
+        from uuid import uuid4
+        from hashlib import sha256
+        grant_code.code=sha256(uuid4().hex).hexdigest()
+        grant_code.expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30)
+        grant_code._scopes=scope
+        grant_code.user_id=user_id
+        grant_code.client_id=client_id
+        grant_code.redirect_uri = redirect_uri
+
+        return grant_code
 
 
 

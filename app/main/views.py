@@ -24,7 +24,7 @@ def op_clients():
         return jsonify({'client': client.to_dict(show_secret=True)})
 
 
-@main.route('/approval', methods`=['GET','POST'])
+@main.route('/approval', methods=['GET','POST'])
 def op_approval():
     if request.method == 'GET':
         response_type = request.get('response_type', None)
@@ -32,6 +32,7 @@ def op_approval():
         redirect_uri = request.get('redirect_uri', None)
         scope = request.get('scope', None)
         state = request.get('state', None)
+
 
         """resorce-server approval"""
         client = Clients.fetch(client_id)
