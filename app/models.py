@@ -69,9 +69,10 @@ class Tokens(Base, ScopesMixin):
         r = {
             'access_token': self.access_token,
             'token_type': "bearer",
-            'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
+            'expires_in': (self.access_token_expire_date - datetime.now()).total_seconds(),
             'refresh_token':self.refresh_token
                 }
+
         return r
 
 class GrantCodes(Base, ScopesMixin):
@@ -95,7 +96,7 @@ class GrantCodes(Base, ScopesMixin):
 
     @classmethod
     def fetch_by_code(cls, code):
-        return cls.query.filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+        return db.session.query(GrantCodes).filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
     @classmethod
     def new(cls, user_id, client_id, redirect_uri, scope):
         grant_code = cls()
@@ -103,7 +104,7 @@ class GrantCodes(Base, ScopesMixin):
         from uuid import uuid4
         from hashlib import sha256
         grant_code.code=sha256(uuid4().hex).hexdigest()
-        grant_code.expire_date=datetime.datetime.now()+datetime.timedelta(minutes=30)
+        grant_code.expire_date=datetime.now()+timedelta(minutes=30)
         grant_code._scopes=scope
         grant_code.user_id=user_id
         grant_code.client_id=client_id
@@ -170,6 +171,7 @@ class Users(Base, ScopesMixin):
             'scopes': self.scopes
                 }
 
+
 class Images(Base):
     __tablename__ = 'images'
     id = Column(String(128), primary_key=True)
@@ -186,6 +188,7 @@ class Images(Base):
         return db.session.query(Images).filter_by(id=id).first()
 
     def to_dict(self):
+        
         return{
             'id': self.id,
             'user_id': self.user.id,
@@ -227,6 +230,7 @@ class Clients(Base):
         return cls(id=id, secret=secret, name=name, type=type, redirect_uri=redirect_uri)
 
     def to_dict(self, show_secret=False):
+        
         r = {
             'id': self.id,
             'name': self.name,

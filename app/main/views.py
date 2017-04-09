@@ -13,7 +13,7 @@ import datetime
 @main.route('/clients', methods=['GET', 'POST'])
 def op_clients():
     if request.method == 'GET':
-        clients = [c.to_dict() for c in Clients.query.all()]
+        clients = [c.to_dict() for c in db.session.query(Clients).all()]
         return jsonify({'clients': clients})
     elif request.method == 'POST':
         data = json.loads(request.data)
@@ -188,7 +188,7 @@ def req_access():
 
     token = Tokens.new(grant_code.user_id, client_id, grant_code._scopes,
             grant_code = code,
-            is_referesh=True)
+            is_refresh=True)
     db.session.add(token)
     db.session.commit()
 
