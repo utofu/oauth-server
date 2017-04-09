@@ -1,6 +1,6 @@
 from . import main
 from .. import db
-from ..models import Users, GrantCodes, Clients
+from ..models import Users, GrantCodes, Clients, Tokens
 from flask import request, redirect, render_template
 from ..helpers import secure_jsonify as jsonify
 from uuid import uuid4
@@ -93,26 +93,26 @@ def req_access():
     grant_code = GrantCodes.fetch_by_code(code)
     if grant_code is None:
         #return err msg
-        return redirect(client.redirect_uri+"?error=invalid_request")
+        return redirect(redirect_uri+"?error=invalid_request")
 
     if grant_code.client_id != client_id :
         #return err msg
-        return redirect(client.redirect_uri+"?error=invalid_request")
+        return redirect(redirect_uri+"?error=invalid_request")
 
     if grant_code.redirect_uri is None :
         if grant_type != "authorization_code" or code is None or client_id is None:
             #return err msg
-            return redirect(client.redirect_uri+"?error=invalid_request")
+            return redirect(redirect_uri+"?error=invalid_request")
     else :
         if grant_type != "authorization_code" or code is None or client_id is None or redirect_uri is None:
             #return err msg
-            return redirect(client.redirect_uri+"?error=invalid_request")
+            return redirect(redirect_uri+"?error=invalid_request")
         else :
             if redirect_uri != grant_code.redirect_uri:
-                return redirect(client.redirect_uri+"?error=invalid_request")
+                return redirect(redirect_uri+"?error=invalid_request")
 
 
-    token = Tokens.new(access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code)
+    token = Tokens.new(grant_code._scopes,grant_code.user_id,client_id,code)
     db.session.add(token)
     db.session.commit()
 

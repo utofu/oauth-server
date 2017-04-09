@@ -46,7 +46,7 @@ class Tokens(Base, ScopesMixin):
     def fetch_by_access_token(cls, access_token):
         return cls.query.filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
     @classmethod
-    def new(cls,access_token_expire_date,refresh_token_expire_date,_scopes,user_id,client_id,grant_code):
+    def new(cls,_scopes,user_id,client_id,grant_code):
         token = cls()
 
         from uuid import uuid4
@@ -63,15 +63,13 @@ class Tokens(Base, ScopesMixin):
         return token
 
     def to_dict(self):
-    r = {
-        'access_token': self.access_token,
-        'token_type': "bearer",
-        'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
-        'refresh_token':self.refresh_token
-            }
-    if show_secret:
-        r.update({'secret': self.secret})
-    return r
+        r = {
+            'access_token': self.access_token,
+            'token_type': "bearer",
+            'expires_in': (self.access_token_expire_date - datetime.datetime.now()).total_seconds(),
+            'refresh_token':self.refresh_token
+                }
+        return r
 
 class GrantCodes(Base, ScopesMixin):
     __tablename__ = 'grant_codes'
