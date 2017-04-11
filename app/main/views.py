@@ -179,18 +179,13 @@ def req_access():
         #return err msg
         return redirect(redirect_uri+"?error=invalid_request")
 
-    if grant_code.redirect_uri is None :
-        if grant_type != "authorization_code" or code is None or client_id is None:
-            #return err msg
-            return redirect(redirect_uri+"?error=invalid_request")
-    else :
-        if grant_type != "authorization_code" or code is None or client_id is None or redirect_uri is None:
-            #return err msg
-            return redirect(redirect_uri+"?error=invalid_request")
-        else :
-            if redirect_uri != grant_code.redirect_uri:
-                return redirect(redirect_uri+"?error=invalid_request")
+    if grant_type != "authorization_code" or code is None or client_id is None:
+        #return err msg
+        return redirect(redirect_uri+"?error=invalid_request")
 
+    if grant_code.redirect_uri is not None and (redirect_uri is None or redirect_uri != grant_code.redirect_uri):
+            #return err msg
+            return redirect(redirect_uri+"?error=invalid_request")
 
     token = Tokens.new(grant_code.user_id, client_id, grant_code._scopes,
             grant_code = code,
@@ -198,8 +193,4 @@ def req_access():
     db.session.add(token)
     db.session.commit()
 
-    if False :
-        #err msg
-        pass
-    else :
-        return jsonify(token.to_dict())
+    return jsonify(token.to_dict())
