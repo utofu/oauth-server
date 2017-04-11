@@ -24,7 +24,7 @@ def op_clients():
         return jsonify({'client': client.to_dict(show_secret=True)})
 
 
-@main.route('/client_identifier', methods=['GET'])
+
 def client_identifier():
     if request.method == 'GET':
         query = request.args
@@ -74,7 +74,6 @@ def client_identifier():
         # ユーザ認証
         return render_template('approval_auth.html', hidden_value=hidden_value)
 
-@main.route('/req_auth', methods=['POST'])
 def req_auth():
     from datetime import datetime, timedelta
     user_id = request.form.get('user_id')
@@ -157,7 +156,14 @@ def req_auth():
             return redirect(client.redirect_uri+"?code="+grant_code.code+"&state="+state) 
 
 
-@main.route('/req_access',methods=['POST'])
+@main.route('/authorize', methods=['GET', 'POST'])
+def authorize():
+    if request.method == 'GET':
+        return client_identifier()
+    elif request.method == 'POST':
+        return req_auth()
+
+@main.route('/token',methods=['POST'])
 def req_access():
     grant_type = request.form.get("grant_type")
     code = request.form.get("code")
