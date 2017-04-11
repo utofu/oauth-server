@@ -184,8 +184,8 @@ def req_access():
         return redirect(redirect_uri+"?error=invalid_request")
 
     if grant_code.redirect_uri is not None and (redirect_uri is None or redirect_uri != grant_code.redirect_uri):
-            #return err msg
-            return redirect(redirect_uri+"?error=invalid_request")
+        #return err msg
+        return redirect(redirect_uri+"?error=invalid_request")
 
     token = Tokens.new(grant_code.user_id, client_id, grant_code._scopes,
             grant_code = code,
