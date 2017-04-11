@@ -2,6 +2,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
 from datetime import datetime, timedelta
+from uuid import uuid4
+from hashlib import sha256
 try: 
     from . import db
 except ValueError:
@@ -49,18 +51,15 @@ class Tokens(Base, ScopesMixin):
     @classmethod
     def new(cls, user_id, client_id, scopes, grant_code=None, is_refresh=False):
         token = cls()
-        from uuid import uuid4
-        from hashlib import sha256
-
         token.access_token=sha256(uuid4().hex).hexdigest()
         token.access_token_expire_date=datetime.now()+timedelta(hours=1)
         token._scopes=scopes
         token.user_id=user_id
         token.client_id=client_id
-        if is_refresh:
+        if is_refresh is True:
             token.refresh_token=sha256(uuid4().hex).hexdigest()
             token.refresh_token_expire_date=datetime.now()+timedelta(days=3)
-        if grant_code:
+        if grant_code is not None:
             token.grant_code=grant_code
 
         return token
@@ -102,8 +101,6 @@ class GrantCodes(Base, ScopesMixin):
     def new(cls, user_id, client_id, redirect_uri, scope):
         grant_code = cls()
 
-        from uuid import uuid4
-        from hashlib import sha256
         grant_code.code=sha256(uuid4().hex).hexdigest()
         grant_code.expire_date=datetime.now()+timedelta(minutes=30)
         grant_code._scopes=scope
@@ -224,8 +221,6 @@ class Clients(Base):
 
     @classmethod
     def new(cls, name, type, redirect_uri):
-        from uuid import uuid4
-        from hashlib import sha256
         id = sha256(uuid4().hex).hexdigest()
         secret = sha256(uuid4().hex).hexdigest()
         return cls(id=id, secret=secret, name=name, type=type, redirect_uri=redirect_uri)
