@@ -66,9 +66,13 @@ def authorize():
     redirect_uri = data.get('redirect_uri', None)
     scope = data.get('scope', None)
     state = data.get('state', None)
+    cancel = data.get('cancel', None)
 
     if state is not None:
         g.response_builder.set_state(state)
+
+    if cancel == 'Cancel':
+        return g.response_builder.make_error_response("access_denied")
 
     client = Clients.fetch(client_id)
 
