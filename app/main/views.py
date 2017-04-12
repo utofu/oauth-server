@@ -114,7 +114,7 @@ def authorize():
         db.session.add(token)
         db.session.commit()
 
-        return g.response_builder.make_response(response)
+        return g.response_builder.make_response(token.to_dict())
 
     elif response_type == 'code':
         grant_code = GrantCodes.new(user_id, client_id, redirect_uri, scope)

@@ -88,6 +88,6 @@ class RedirectWithFlagmentResponseBuilder(RedirectResponseBuilder):
 
     @property
     def redirect_uri(self):
-        redirect_uri = deepcopy(self.__redirect_uri)
+        redirect_uri = deepcopy(self._redirect_uri)
         redirect_uri[5] = urlencode(self.params)
         return urlunparse(redirect_uri)
