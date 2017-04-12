@@ -1,7 +1,7 @@
 # coding: utf-8
 from . import main
 from .. import db
-from ..responses import RedirectResponseBuilder, RedirectWithFlagmentResponseBuilder
+from ..responses import RedirectResponseBuilder, RedirectWithFlagmentResponseBuilder, BaseResponseBuilder
 from six.moves.urllib.parse import urlparse
 
 from flask import request, render_template, redirect, g
@@ -36,7 +36,20 @@ def op_clients():
 
 @main.before_request
 def before_request():
-    pass
+    if request.method == 'GET':
+        data = request.args
+    else:
+        data = request.form
+
+    response_type = data.get('response_type', None)
+    if response_type == 'code':
+        g.response_builder = RedirectResponseBuilder()
+
+    elif response_type == 'token':
+        g.response_builder = RedirectWithFlagmentResponseBuilder()
+
+    else:
+        g.response_builder = BaseResponseBuilder()
 
 
 @main.route('/authorize', methods=['GET', 'POST'])
@@ -92,7 +105,7 @@ def authorize():
 
     # user auth
     user = Users.fetch(user_id, password)
-    if user is not None:
+    if user is None:
         return g.response_builder.make_error_response("access_denied")
 
     if response_type == 'token':
@@ -145,4 +158,4 @@ def req_access():
     db.session.add(token)
     db.session.commit()
 
-    return jsonify(token.to_dict())
+    return jsonify({'token': token.to_dict()})

@@ -59,6 +59,7 @@ class RedirectResponseBuilder(BaseResponseBuilder):
 
     def __init__(self):
         self._redirect_uri = None
+        super(RedirectResponseBuilder, self).__init__()
 
     def set_redirect_uri(self, redirect_uri):
         self._redirect_uri = list(urlparse(redirect_uri))
@@ -81,6 +82,9 @@ class RedirectResponseBuilder(BaseResponseBuilder):
           return redirect(self.redirect_uri, code=302)
 
 class RedirectWithFlagmentResponseBuilder(RedirectResponseBuilder):
+
+    def __init__(self):
+        super(RedirectWithFlagmentResponseBuilder, self).__init__()
 
     @property
     def redirect_uri(self):

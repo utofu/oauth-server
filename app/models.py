@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import backref, scoped_session
+from sqlalchemy.orm import backref, scoped_session, create_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -243,6 +243,11 @@ class Clients(Base):
 
 if __name__ == "__main__":
     Base.metadata.create_all(db.get_engine(app))
+    user = Users.new_user("poe", "poe")
+    session = create_session(bind=db.get_engine(app), autocommit=False)
+    session.add(user)
+    session.commit()
+
     try:
         from eralchemy import render_er
         render_er(Base, '../er.png')
