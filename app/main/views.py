@@ -42,11 +42,18 @@ def before_request():
         data = request.form
 
     response_type = data.get('response_type', None)
+    grant_type = data.get('grant_type', None)
     if response_type == 'code':
         g.response_builder = RedirectResponseBuilder()
 
     elif response_type == 'token':
         g.response_builder = RedirectWithFlagmentResponseBuilder()
+
+    elif grant_type == 'authorization_code':
+        g.response_builder = RedirectResponseBuilder()
+
+    elif grant_type in ["password", "client_credentials", "refresh_token"]:
+        g.response_builder = BaseResponseBuilder()
 
     else:
         g.response_builder = BaseResponseBuilder()
