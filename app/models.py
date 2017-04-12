@@ -96,7 +96,10 @@ class GrantCodes(Base, ScopesMixin):
 
     @classmethod
     def fetch_by_code(cls, code):
-        return db.session.query(GrantCodes).filter_by(code=code).filter(cls.expire_date > datetime.now()).first()
+        return db.session.query(GrantCodes).filter_by(code=code).filter(cls.expire_date > datetime.now()).filter_by(is_lapsed=False).first()
+
+    def lasped(self):
+        self.is_lapsed = True
 
     @classmethod
     def new(cls, user_id, client_id, redirect_uri, scope):

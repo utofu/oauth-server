@@ -153,6 +153,8 @@ def req_access():
         #return err msg
         return redirect(redirect_uri + "?error=invalid_request")
 
+    grant_code.lasped()
+
     token = Tokens.new(
         grant_code.user_id,
         client_id,
@@ -160,6 +162,7 @@ def req_access():
         grant_code=code,
         is_refresh=True)
     db.session.add(token)
+    db.session.add(grant_code)
     db.session.commit()
 
     return jsonify({'token': token.to_dict()})
