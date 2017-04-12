@@ -1,3 +1,4 @@
+# coding: utf8
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, scoped_session, create_session
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, text, Boolean, ForeignKey
@@ -40,13 +41,35 @@ class Tokens(Base, ScopesMixin):
     refresh_token = Column(String(256), nullable=True)
     refresh_token_expire_date = Column(DateTime, nullable=True)
     _scopes = Column(Text, nullable=False)
-    user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=False)
+    user_id = Column(String(128), ForeignKey('users.id',ondelete='CASCADE'), nullable=True)
     client_id = Column(String(128), ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     grant_code = Column(String(256), ForeignKey('grant_codes.code', ondelete='CASCADE'))
 
     @classmethod
     def fetch_by_access_token(cls, access_token):
         return db.session.query(Tokens).filter_by(access_token=access_token).filter(cls.access_token_expire_date > datetime.now()).first()
+
+    @classmethod
+    def fetch_by_refresh_token(cls, refresh_token):
+        return db.session.query(Tokens).filter_by(refresh_token=refresh_token).filter(cls.refresh_token_expire_date > datetime.now()).first()
+
+    def create_token(self, new_scopes=None):
+        new_token = Tokens()
+        new_token.access_token = sha256(uuid4().hex).hexdigest()
+        new_token.refresh_token = sha256(uuid4().hex).hexdigest()
+        new_token.access_token_expire_date = self.access_token_expire_date
+        new_token.refresh_token_expire_date = self.refresh_token_expire_date
+        if new_scopes is not None:
+            # TODO: スコープの範囲チェック
+            new_token.scopes = new_scopes
+        else:
+            new_token.scopes = self.scopes
+        new_token.user_id = self.user_id
+        new_token.client_id = self.client_id
+        new_token.grant_code = self.grant_code
+        return new_token
+
+
 
     @classmethod
     def new(cls, user_id, client_id, scopes, grant_code=None, is_refresh=False):
@@ -243,6 +266,11 @@ class Clients(Base):
     @classmethod
     def fetch(cls, client_id):
         return db.session.query(Clients).filter_by(id=client_id).first()
+
+    @classmethod
+    def authorize(cls, client_id, client_secret):
+        return db.session.query(Clients).filter_by(id=client_id).filter_by(secret=client_secret).first()
+
 
 if __name__ == "__main__":
     Base.metadata.create_all(db.get_engine(app))

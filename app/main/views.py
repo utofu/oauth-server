@@ -133,36 +133,68 @@ def req_access():
     grant_type = request.form.get("grant_type")
     code = request.form.get("code")
     redirect_uri = request.form.get("redirect_uri")
+    refresh_token = request.form.get("refresh_token")
     client_id = request.form.get("client_id")
+    client_secret = request.form.get("client_secret")
+    username = request.form.get("username")
+    password = request.form.get("password")
 
-    grant_code = GrantCodes.fetch_by_code(code)
-    if grant_code is None:
-        #return err msg
-        return redirect(redirect_uri + "?error=invalid_request")
+    if grant_type not in ["authorization_code", "password", "client_credentials", "refresh_token"]:
+        return g.response_builder.make_error_response("invalid_request")
 
-    if grant_code.client_id != client_id:
-        #return err msg
-        return redirect(redirect_uri + "?error=invalid_request")
+    if grant_type == "authorization_code":
+        grant_code = GrantCodes.fetch_by_code(code)
 
-    if grant_type != "authorization_code" or code is None or client_id is None:
-        #return err msg
-        return redirect(redirect_uri + "?error=invalid_request")
+        if grant_code is None:
+            return g.response_builder.make_error_response("invalid_request")
 
-    if grant_code.redirect_uri is not None and (
+        if grant_code.client_id != client_id:
+            return g.response_builder.make_error_response("invalid_request")
+
+        if grant_code.redirect_uri is not None and (
             redirect_uri is None or redirect_uri != grant_code.redirect_uri):
-        #return err msg
-        return redirect(redirect_uri + "?error=invalid_request")
+            return g.response_builder.make_error_response("invalid_request")
 
-    grant_code.lasped()
+        grant_code.lasped()
+        db.session.add(grant_code)
 
-    token = Tokens.new(
+        token = Tokens.new(
         grant_code.user_id,
         client_id,
         grant_code._scopes,
         grant_code=code,
         is_refresh=True)
+
+    elif grant_type == "password":
+        user = Users.fetch(username, password)
+        client = Clients.authorize(client_id, client_secret)
+
+        if user is None or client is None:
+            return g.response_builder.make_error_response("access_denied")
+
+
+        token = Tokens.new(username, client_id, client._scopes, is_refresh=True)
+
+    elif grant_type == "client_credentials":
+        client = Clients.authorize(client_id, client_secret)
+
+        if client is None:
+            return g.response_builder.make_error_response("access_denied")
+
+        token = Tokens.new(None, client_id, client._scopes, is_refresh=False)
+
+    elif grant_type == "refresh_token":
+        old_token = Tokens.fetch_by_refresh_token(refresh_token)
+
+        if old_token is None:
+            return g.response_builder.make_error_response("invalid_request")
+
+        token = old_token.create_token(scopes)
+        db.session.delete(old_token)
+
+
+
     db.session.add(token)
-    db.session.add(grant_code)
     db.session.commit()
 
     return jsonify({'token': token.to_dict()})
