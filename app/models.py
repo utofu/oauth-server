@@ -69,10 +69,11 @@ class Tokens(Base, ScopesMixin):
             'access_token': self.access_token,
             'token_type': "bearer",
             'expires_in': (self.access_token_expire_date - datetime.now()).total_seconds(),
-            'refresh_token':self.refresh_token
+            'refresh_token':self.refresh_token,
+            'scopes': self.scopes
                 }
 
-        return r
+        return {k: v for k, v in r.items() if v is not None}
 
 class GrantCodes(Base, ScopesMixin):
     __tablename__ = 'grant_codes'
