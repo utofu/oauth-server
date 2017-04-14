@@ -4,13 +4,13 @@ from flask_script import Manager, Shell
 from app import create_app
 from flask import url_for
 
-
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
 
 
 def make_shell():
     return dict(app=app)
+
 
 manager.add_command("shell", Shell(make_context=make_shell))
 
@@ -38,14 +38,13 @@ def list_routes():
 
         methods = ','.join(rule.methods)
         url = url_for(rule.endpoint, **options)
-        line = urllib.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        line = urllib.unquote(
+            "{:50s} {:20s} {}".format(rule.endpoint, methods, url))
         output.append(line)
 
     for line in sorted(output):
         print line
 
 
-
 if __name__ == '__main__':
     manager.run()
-

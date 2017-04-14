@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Login Approval</h2>
+<form method="post" action="/authorize">
+    <p>User_id<input type="text" name="user_id"></p>
+    <p>PassWord<input type="password" name="password"></p>
+    {% for k, v in hidden_value.iteritems() %}
+        {% if v is not none %}
+            <input type= "hidden" name="{{k}}" value="{{v}}">
+        {% endif %}
+    {% endfor %}
+    <input type="submit" name="send" value="Send">
+    <input type="submit" name="cancel" value="Cancel">
+</form>
+{% endblock %}
